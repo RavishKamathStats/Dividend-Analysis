@@ -11,7 +11,9 @@ install_github("vqv/ggbiplot")
 library(ggbiplot)
 library(MASS)
 library(pROC)
-#library(ggplot2)
+library(ggplot2)
+library(ggthemes)
+
 
 
 # Data set ----------------------------------------------------------------
@@ -21,6 +23,7 @@ df$dividend = factor(df$dividend)
 str(df)
 View(df)
 
+df0 = read.csv(file.choose(), header = T)
 # Understanding the Data --------------------------------------------------
 
 # Our independent variables are as follows:
@@ -37,7 +40,7 @@ View(df)
 # the company is regarded as improving prospects and more financial & operational
 # flexibility
 
-##### earnings_growth: Earnings growth: in the past year (in %)
+##### earnings_growth: Earnings growth in the past year (in %)
 
 # Definition: The change in an entity's report net income over a period of time.
 # The measure is usually a period-to-period comparison. The concept can also be
@@ -99,7 +102,7 @@ pairs.panels(df[,-1], gap = 0,
 #differently.
 pc = prcomp(df[,-1], center = TRUE, scale. = TRUE)
 attributes(pc)
-pc
+pc$rotation
 summary(pc)
 
 pairs.panels(pc$x, gap = 0, 
@@ -138,7 +141,7 @@ legend(4.2, 0.4, legend=c("Proportion", "Cumulative"),
 
 # New Data set with PC ----------------------------------------------------
 df_pc = pc$x[,1:4]
-df_pc = cbind(df_pc, df$dividend)
+df_pc = cbind(df_pc, df0$dividend)
 colnames(df_pc)[5] = "dividend"
 df_pc = as.data.frame(df_pc)
 df_pc$dividend = factor(df_pc$dividend)
@@ -192,13 +195,16 @@ lda_plot = cbind(train, predict(model_train)$x)
 lda.values = predict(model_train, train)
 class = predict(model_train)$class
 # blue is class = 1, green is class = 0
-plot(lda.values$x[,1], type="p", xlim=c(0,30), ylab=c("LDA Axis 1"),
-     col=c(as.numeric(class)+10))
+par(bg = "darkred")
+plot(lda.values$x[,1], type="p", xlim=c(0,160), ylab=c("LDA Axis 1"),
+     col=c(as.numeric(class)+10),
+     main = "Double - Color Scatter Plot",
+     pch = 16)
 abline(h = 0)
 
-
-
-
+legend("bottomright", legend=c("No Dividend", "Dividend"),
+       col=c("green", "blue"),pch =16,
+       title="Line types", text.font=4, bg='white', cex = 0.7)
 
 
 
@@ -251,3 +257,43 @@ merrlin
 
 
 
+
+
+
+# Real life prediction on real data ---------------------------------------
+##### Jumia Stock
+# We know Jumia doesn't issues dividend to their share holders, so we would 
+# like to see,if our model will accurately predict whether it issues or does not 
+# issue stock
+
+#Getting the info from Yahoo Finance we have:
+
+#fcfps = -1.84
+#https://www.alphaquery.com/stock/JMIA/fundamentals/annual/free-cash-flow-per-share
+
+#Earnings = 11.87
+#https://www.wallstreetzen.com/stocks/us/nyse/jmia/earnings
+
+#D/E = 0.0629
+#https://ycharts.com/companies/JMIA/debt_equity_ratio
+
+#Martketcap = 474.42
+#https://investor.jumia.com/investor-relations/default.aspx
+
+#Current Ratio = 2.62
+#Yahoo Finance
+
+n.dat <- data.frame(fcfps = -1.84, earnings_growth = 11.87, de = 0.0629, 
+                    mcap = 474.42, current_ratio = 2.62 )
+pc4 = pc$rotation[,1:4]
+n.dat_pc = data.frame(unlist(n.dat)%*%pc4)
+
+
+model = lda( dividend ~ PC1 + PC2 + PC3 + PC4, data = df_pc)
+model
+
+predict(model, n.dat_pc)$class
+
+#Unfortunately it wrongly classifies this stock. 
+  
+  
