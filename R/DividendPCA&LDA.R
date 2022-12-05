@@ -240,3 +240,74 @@ library("factoextra")
 data("decathlon2")
 
 View(decathlon2)
+
+
+
+# George and Emme's Work --------------------------------------------------
+library(MASS)
+library(ggplot2)
+
+set.seed(1000)
+
+df = read.csv(file.choose(), header = T)
+str(df) # view the data set
+
+# create training and test samples training(80%) test set (20%)
+sample = sample(c(TRUE,FALSE), nrow(df), replace=TRUE, prob=c(0.8,0.2))
+train = df[sample, ]
+test = df[!sample, ]
+
+# fit LDA model
+model = lda(dividend~., data = train)
+model
+
+# using model to make predictions
+predicted = predict(model, test)
+names(predicted)
+
+# view predicted class for first 6 obs in test set 
+head(predicted$class)
+
+# view posterior probabilities for first 6 obs in test set
+head(predicted$posterior)
+
+# view linear discriminant for first 6 obs in test set
+head(predicted$x)
+
+# accuracy of model
+acc = mean(predicted$class==test$dividend)
+round(acc, 4)
+
+#### Visualize Results
+# define data to plot
+lda_plot = cbind(train, predict(model)$x)
+
+
+# double-color scatter plot
+lda.values = predict(model, train)
+class = predict(model)$class
+# blue is class = 1, green is class = 0
+plot(lda.values$x[,1], type="p", xlim=c(0,30), ylab=c("LDA Axis 1"),col=c(as.numeric(class)+10))
+
+
+pc = prcomp(df[,-1], center = TRUE, scale. = TRUE)
+
+df_pc = pc$x[,1:4]
+df_pc = cbind(df_pc, df$dividend)
+colnames(df_pc)[5] = "dividend"
+df_pc = as.data.frame(df_pc)
+df_pc$dividend = factor(df_pc$dividend)
+
+# check misclassification rate
+rep = 5
+errlin = dim(rep)
+for (i in 1: rep){
+  pred = predict(model, test)$class
+  tablin = table(test$dividend, pred)
+  errlin[i] = (dim(test)[1] - sum(diag(tablin)))/dim(test)[1]
+}
+merrlin = mean(errlin)
+round(merrlin,4)
+
+
+
