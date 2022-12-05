@@ -21,4 +21,7 @@ Methods:
 We will be using PCA and LDA methods to see if these will give us a good model 
 for prediction. 
 
+Group Members:
+Ravish Kamath, Vi Nguyen, George Zhu & Yutong Pan
+
 THERE IS A POSTER TO VIEW ALL THE RESULTS IN THIS REPOSITORY.
