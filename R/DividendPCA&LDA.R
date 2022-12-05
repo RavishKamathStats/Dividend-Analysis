@@ -169,8 +169,7 @@ round(acc, 4)
 
 #Accuracy indicates 97.3%
 
-
-# Cross Validation 5 times where 80% is used as the training data.
+# Cross Validation 1000 times where 80% is used as the training data.
 set.seed(3)
 rep = 1000
 errlin = dim(rep)
@@ -232,7 +231,7 @@ round(acc, 4)
 #Accuracy indicates 97.3% which is the same as when we did not do PCA.
 
 
-# Cross Validation 5 times where 80% is used as the training data
+# Cross Validation 1000 times where 80% is used as the training data
 set.seed(2)
 rep = 1000
 errlin = dim(rep)
@@ -251,14 +250,22 @@ merrlin
 #We have a miss-classification rate of 6.57% which is almost the exact same
 #as what we had when we did do PCA. 
 
+# define data to plot
+lda_plot = cbind(train, predict(model_train)$x)
+# double-color scatter plot
+lda.values = predict(model_train, train)
+class = predict(model_train)$class
+# blue is class = 1, green is class = 0
+par(bg = "darkred")
+plot(lda.values$x[,1], type="p", xlim=c(0,160), ylab=c("LDA Axis 1"),
+     col=c(as.numeric(class)+10),
+     main = "Double - Color Scatter Plot",
+     pch = 16)
+abline(h = 0)
 
-
-
-
-
-
-
-
+legend("bottomright", legend=c("No Dividend", "Dividend"),
+       col=c("green", "blue"),pch =16,
+       title="Line types", text.font=4, bg='white', cex = 0.7)
 
 # Real life prediction on real data ---------------------------------------
 ##### Jumia Stock
