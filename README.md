@@ -5,6 +5,7 @@ In this project, we would like to analysis a dividend data set.
 The features in this data set include:
 
 Dividend: 0 for dividend; 1 for no dividend
+
 Fcfps (Free cash flow per share $): Useful to gauge the return a shareholder 
                                     receives after buying a stock.
                                     
