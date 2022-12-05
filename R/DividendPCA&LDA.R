@@ -11,6 +11,8 @@ install_github("vqv/ggbiplot")
 library(ggbiplot)
 library(MASS)
 library(pROC)
+library(ggplot2)
+
 
 # Data set ----------------------------------------------------------------
 
@@ -144,10 +146,61 @@ df_pc$dividend = factor(df_pc$dividend)
 
 # LDA ---------------------------------------------------------------------
 
-####### Linear discriminant model Using the PC
+####### Linear discriminant model without USING the PC
+model = lda(dividend ~., data = df)
+model
 
+# Let us check the prediction accurarcy when using LDA
+set.seed(1000)
+sample = sample(c(TRUE,FALSE), nrow(df), replace=TRUE, prob=c(0.8,0.2))
+train = df[sample, ]
+test = df[!sample, ]
+
+model_train = lda(dividend ~., data = train)
+
+# using model to make predictions
+predicted = predict(model, test)
+
+# accuracy of model
+acc = mean(predicted$class==test$dividend)
+round(acc, 4)
+
+#Accuracy indicates 97.3%
+
+
+# Cross Validation 5 times where 80% is used as the training data.
+set.seed(3)
+rep = 1000
+errlin = dim(rep)
+for (i in 1: rep){
+  training = sample(1:200, 165)
+  trg = df[training,]
+  tst = df[-training,]
+  mod = lda(dividend ~., data = trg)
+  pred = predict(mod, tst)$class
+  tablin = table(tst$dividend, pred)
+  errlin[i] = (dim(tst)[1] - sum(diag(tablin)))/dim(tst)[1]
+}
+merrlin = mean(errlin)
+merrlin
+
+#We have a miss-classification rate of 6% when doing cross validation a 1000 
+#times
+
+# define data to plot
+lda_plot = cbind(train, predict(model_train)$x)
+# double-color scatter plot
+lda.values = predict(model_train, train)
+class = predict(model_train)$class
+# blue is class = 1, green is class = 0
+plot(lda.values$x[,1], type="p", xlim=c(0,30), ylab=c("LDA Axis 1"),
+     col=c(as.numeric(class)+10))
+abline(h = 0)
+
+
+####### Linear discriminant model Using the PC
 #Linear discriminant model
-model1 = lda( dividend ~ PC1 + PC2 + PC3, data = df_pc)
+model1 = lda( dividend ~ PC1 + PC2 + PC3 + PC4, data = df_pc)
 model1
 
 
@@ -172,142 +225,6 @@ merrlin
 
 
 
-#######Performing LDA without PCA
-
-#Linear discriminant model
-mod = lda( dividend ~., data = df)
-mod
-
-
-# Cross Validation 5 times where 80% is used as the training data.
-set.seed(3)
-rep = 5
-errlin = dim(rep)
-for (i in 1: rep){
-  training = sample(1:200, 165)
-  trg = df[training,]
-  tst = df[-training,]
-  mod = lda(dividend ~., data = trg)
-  pred = predict(mod, tst)$class
-  tablin = table(tst$dividend, pred)
-  errlin[i] = (dim(tst)[1] - sum(diag(tablin)))/dim(tst)[1]
-}
-merrlin = mean(errlin)
-merrlin
-
-#We have a miss-classification rate of 4%
-
-
-
-
-
-
-
-# Vi's Work ---------------------------------------------------------------
-#pca, scree plot
-myPr=prcomp(df[,-1], scale=TRUE )
-plot(myPr, type="l")
-
-#
-myPr
-summary(myPr)
-
-#red arrows are the eigen vectors of each variable in df, 
-#each numbers are our obs from df(in order), and are plotted by its values of PC1 and PC 2
-#interpretation: _an obs has higher value of PC1, it has lower value in earnings_growth,slightly lower in current_ratio, fcfps and mcap, 
-#and it has higher value of de
-#                _an obs has higher value on PC2, it has lower value in earnings_growth,slightly lower in de 
-#and no real  difference in mcap and fcfps
-#and slightly higher in current_ratio
-#biplot helps with understanding the relationship bw the variables and the PCs
-biplot(myPr, scale = 0)
-
-#components of myPr
-str(myPr)
-#attach PC1 and PC2 scores into our df 
-newdf=cbind(df, myPr$x[,1:2])
-
-#gg plot
-
-
-
-
-
-
-
-library("factoextra")
-
-data("decathlon2")
-
-View(decathlon2)
-
-
-
-# George and Emme's Work --------------------------------------------------
-library(MASS)
-library(ggplot2)
-
-set.seed(1000)
-
-df = read.csv(file.choose(), header = T)
-str(df) # view the data set
-
-# create training and test samples training(80%) test set (20%)
-sample = sample(c(TRUE,FALSE), nrow(df), replace=TRUE, prob=c(0.8,0.2))
-train = df[sample, ]
-test = df[!sample, ]
-
-# fit LDA model
-model = lda(dividend~., data = train)
-model
-
-# using model to make predictions
-predicted = predict(model, test)
-names(predicted)
-
-# view predicted class for first 6 obs in test set 
-head(predicted$class)
-
-# view posterior probabilities for first 6 obs in test set
-head(predicted$posterior)
-
-# view linear discriminant for first 6 obs in test set
-head(predicted$x)
-
-# accuracy of model
-acc = mean(predicted$class==test$dividend)
-round(acc, 4)
-
-#### Visualize Results
-# define data to plot
-lda_plot = cbind(train, predict(model)$x)
-
-
-# double-color scatter plot
-lda.values = predict(model, train)
-class = predict(model)$class
-# blue is class = 1, green is class = 0
-plot(lda.values$x[,1], type="p", xlim=c(0,30), ylab=c("LDA Axis 1"),col=c(as.numeric(class)+10))
-
-
-pc = prcomp(df[,-1], center = TRUE, scale. = TRUE)
-
-df_pc = pc$x[,1:4]
-df_pc = cbind(df_pc, df$dividend)
-colnames(df_pc)[5] = "dividend"
-df_pc = as.data.frame(df_pc)
-df_pc$dividend = factor(df_pc$dividend)
-
-# check misclassification rate
-rep = 5
-errlin = dim(rep)
-for (i in 1: rep){
-  pred = predict(model, test)$class
-  tablin = table(test$dividend, pred)
-  errlin[i] = (dim(test)[1] - sum(diag(tablin)))/dim(test)[1]
-}
-merrlin = mean(errlin)
-round(merrlin,4)
 
 
 
