@@ -11,7 +11,7 @@ install_github("vqv/ggbiplot")
 library(ggbiplot)
 library(MASS)
 library(pROC)
-library(ggplot2)
+#library(ggplot2)
 
 
 # Data set ----------------------------------------------------------------
@@ -137,20 +137,19 @@ legend(4.2, 0.4, legend=c("Proportion", "Cumulative"),
 
 
 # New Data set with PC ----------------------------------------------------
-df_pc = pc$x[,1:3]
-df_pc = cbind(df_pc, df0$dividend)
-colnames(df_pc)[4] = "dividend"
+df_pc = pc$x[,1:4]
+df_pc = cbind(df_pc, df$dividend)
+colnames(df_pc)[5] = "dividend"
 df_pc = as.data.frame(df_pc)
 df_pc$dividend = factor(df_pc$dividend)
 
 
 # LDA ---------------------------------------------------------------------
-
 ####### Linear discriminant model without USING the PC
 model = lda(dividend ~., data = df)
 model
 
-# Let us check the prediction accurarcy when using LDA
+# Let us check the prediction accuracy when using LDA
 set.seed(1000)
 sample = sample(c(TRUE,FALSE), nrow(df), replace=TRUE, prob=c(0.8,0.2))
 train = df[sample, ]
@@ -159,7 +158,7 @@ test = df[!sample, ]
 model_train = lda(dividend ~., data = train)
 
 # using model to make predictions
-predicted = predict(model, test)
+predicted = predict(model_train, test)
 
 # accuracy of model
 acc = mean(predicted$class==test$dividend)
@@ -173,7 +172,7 @@ set.seed(3)
 rep = 1000
 errlin = dim(rep)
 for (i in 1: rep){
-  training = sample(1:200, 165)
+  training = sample(1:200, 163)
   trg = df[training,]
   tst = df[-training,]
   mod = lda(dividend ~., data = trg)
@@ -184,7 +183,7 @@ for (i in 1: rep){
 merrlin = mean(errlin)
 merrlin
 
-#We have a miss-classification rate of 6% when doing cross validation a 1000 
+#We have a miss-classification rate of 6.5% when doing cross validation a 1000 
 #times
 
 # define data to plot
@@ -198,21 +197,44 @@ plot(lda.values$x[,1], type="p", xlim=c(0,30), ylab=c("LDA Axis 1"),
 abline(h = 0)
 
 
+
+
+
+
+
+
 ####### Linear discriminant model Using the PC
 #Linear discriminant model
-model1 = lda( dividend ~ PC1 + PC2 + PC3 + PC4, data = df_pc)
-model1
+model = lda( dividend ~ PC1 + PC2 + PC3 + PC4, data = df_pc)
+model
+
+# Let us check the prediction accuracy when using LDA
+set.seed(1000)
+sample = sample(c(TRUE,FALSE), nrow(df_pc), replace=TRUE, prob=c(0.8,0.2))
+train = df_pc[sample, ]
+test = df_pc[!sample, ]
+
+model_train = lda(dividend ~., data = train)
+
+# using model to make predictions
+predicted = predict(model_train, test)
+
+# accuracy of model
+acc = mean(predicted$class==test$dividend)
+round(acc, 4)
+
+#Accuracy indicates 97.3% which is the same as when we did not do PCA.
 
 
 # Cross Validation 5 times where 80% is used as the training data
 set.seed(2)
-rep = 5
+rep = 1000
 errlin = dim(rep)
 for (i in 1: rep){
-  training = sample(1:200, 165)
+  training = sample(1:200, 163)
   trg = df_pc[training,]
   tst = df_pc[-training,]
-  mod = lda(dividend ~ PC1 + PC2 + PC3, data = trg)
+  mod = lda(dividend ~ PC1 + PC2 + PC3 + PC4, data = trg)
   pred = predict(mod, tst)$class
   tablin = table(tst$dividend, pred)
   errlin[i] = (dim(tst)[1] - sum(diag(tablin)))/dim(tst)[1]
@@ -220,7 +242,8 @@ for (i in 1: rep){
 merrlin = mean(errlin)
 merrlin
 
-#We have a miss-classification rate of 8%
+#We have a miss-classification rate of 6.57% which is almost the exact same
+#as what we had when we did do PCA. 
 
 
 
